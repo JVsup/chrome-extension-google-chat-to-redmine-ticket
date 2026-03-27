@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Extension Settings</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 450px; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; }
+    input[type="text"], input[type="password"], select, textarea { width: 100%; padding: 8px; box-sizing: border-box; }
+    textarea { resize: vertical; min-height: 80px; font-family: monospace; font-size: 12px; }
+    button { padding: 10px 15px; background: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; }
+    button:hover { background: #0056b3; }
+    hr { margin: 20px 0; border: 0; border-top: 1px solid #ccc; }
+    #status { margin-top: 10px; color: green; font-weight: bold; }
+    
+    /* Hide provider settings by default */
+    .provider-settings { display: none; padding: 15px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 15px; }
+    .provider-settings.active { display: block; }
+  </style>
+</head>
+<body>
+  <h2>Settings</h2>
+
+  <div class="form-group">
+    <label for="outputLanguage">Ticket Output Language:</label>
+    <select id="outputLanguage">
+      <option value="cs">Czech</option>
+      <option value="en">English</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="aiProvider">AI Provider:</label>
+    <select id="aiProvider">
+      <option value="openrouter">OpenRouter</option>
+      <option value="openai">OpenAI (ChatGPT)</option>
+      <option value="anthropic">Anthropic (Claude)</option>
+      <option value="aistudio">Google AI Studio (Gemini)</option>
+      <option value="vertex">Google Vertex AI</option>
+      <option value="custom">Custom Local LLM</option>
+    </select>
+  </div>
+
+  <div id="settings-openrouter" class="provider-settings active">
+    <div class="form-group">
+      <label for="openRouterKey">OpenRouter API Key:</label>
+      <input type="password" id="openRouterKey" placeholder="sk-or-v1-...">
+    </div>
+    <div class="form-group">
+      <label for="openRouterModel">Model:</label>
+      <input type="text" id="openRouterModel" placeholder="meta-llama/llama-3.3-70b-instruct:free">
+    </div>
+  </div>
+
+  <div id="settings-openai" class="provider-settings">
+    <div class="form-group">
+      <label for="openAiKey">OpenAI API Key:</label>
+      <input type="password" id="openAiKey" placeholder="sk-proj-...">
+    </div>
+    <div class="form-group">
+      <label for="openAiModel">Model:</label>
+      <input type="text" id="openAiModel" placeholder="gpt-4o">
+    </div>
+  </div>
+
+  <div id="settings-anthropic" class="provider-settings">
+    <div class="form-group">
+      <label for="anthropicKey">Anthropic API Key:</label>
+      <input type="password" id="anthropicKey" placeholder="sk-ant-api03-...">
+    </div>
+    <div class="form-group">
+      <label for="anthropicModel">Model:</label>
+      <input type="text" id="anthropicModel" placeholder="claude-3-7-sonnet-20250219">
+    </div>
+  </div>
+
+  <div id="settings-aistudio" class="provider-settings">
+    <div class="form-group">
+      <label for="aiStudioKey">AI Studio API Key:</label>
+      <input type="password" id="aiStudioKey" placeholder="AIzaSy...">
+    </div>
+    <div class="form-group">
+      <label for="aiStudioModel">Model:</label>
+      <input type="text" id="aiStudioModel" placeholder="gemini-2.5-pro">
+    </div>
+  </div>
+
+  <div id="settings-vertex" class="provider-settings">
+    <div class="form-group">
+      <label for="vertexJson">Service Account JSON:</label>
+      <textarea id="vertexJson" placeholder='{"type": "service_account", "project_id": "...", ...}'></textarea>
+    </div>
+    <div class="form-group">
+      <label for="vertexRegion">Region:</label>
+      <input type="text" id="vertexRegion" placeholder="us-central1">
+    </div>
+    <div class="form-group">
+      <label for="vertexModel">Model:</label>
+      <input type="text" id="vertexModel" placeholder="gemini-1.5-pro-002">
+    </div>
+  </div>
+
+  <div id="settings-custom" class="provider-settings">
+    <div class="form-group">
+      <label for="customUrl">Custom Endpoint URL:</label>
+      <input type="text" id="customUrl" placeholder="http://localhost:1234/v1/chat/completions">
+    </div>
+    <div class="form-group">
+      <label for="customKey">API Key (Optional):</label>
+      <input type="password" id="customKey" placeholder="Leave empty for most local LLMs">
+    </div>
+    <div class="form-group">
+      <label for="customModel">Model Name (Optional):</label>
+      <input type="text" id="customModel" placeholder="local-model">
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="form-group">
+    <label for="redmineUrl">Redmine Server URL:</label>
+    <input type="text" id="redmineUrl" placeholder="https://redmine.yourcompany.com">
+  </div>
+  <div class="form-group">
+    <label for="redmineKey">Redmine API Key:</label>
+    <input type="password" id="redmineKey" placeholder="a1b2c3d4e5f6g7h8i9j0...">
+  </div>
+  <div class="form-group">
+    <label for="defaultProject">Default Project ID:</label>
+    <input type="text" id="defaultProject" placeholder="12">
+  </div>
+  <div class="form-group">
+    <label for="defaultUser">Default Assignee (User ID):</label>
+    <input type="text" id="defaultUser" placeholder="42">
+  </div>
+
+  <button id="saveBtn">Save Settings</button>
+  <div id="status"></div>
+
+  <script src="options.js"></script>
+</body>
+</html>
