@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Chat to Redmine Ticket</title>
+    <style>
+        /* Base styles and variables */
+        :root {
+            --bg-color: #f8f9fa;
+            --container-bg: #ffffff;
+            --text-color: #333333;
+            --heading-color: #2c3e50;
+            --border-color: #e9ecef;
+            color-scheme: light dark;
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #121212;
+                --container-bg: #1e1e1e;
+                --text-color: #e0e0e0;
+                --heading-color: #ffffff;
+                --border-color: #333333;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .privacy-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--container-bg);
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: var(--heading-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        h2 {
+            color: var(--heading-color);
+            margin-top: 30px;
+            font-size: 1.3em;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        .effective-date {
+            color: #666;
+            font-style: italic;
+            margin-bottom: 30px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .effective-date { color: #aaa; }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 20px 12px;
+            }
+
+            .privacy-container {
+                padding: 24px 18px;
+                border-radius: 6px;
+            }
+
+            h1 {
+                font-size: 1.7rem;
+            }
+
+            h2 {
+                font-size: 1.15rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <main class="privacy-container">
+        <h1>Privacy Policy for "Chat to Redmine Ticket"</h1>
+        <p class="effective-date">Effective Date: March 28, 2026</p>
+
+        <section>
+            <h2>1. Data Collection and Usage</h2>
+            <p>The "Chat to Redmine Ticket" extension is designed to read user-selected text from Google Chat and convert it into a structured Redmine ticket using AI. The extension temporarily accesses personal communications and website content solely for the purpose of executing the user's explicit command (creating a ticket from highlighted text).</p>
+        </section>
+
+        <section>
+            <h2>2. Data Storage</h2>
+            <p>All user configurations, including Redmine server URLs, API keys (for Redmine, OpenAI, Anthropic, Google AI Studio, Vertex AI, or custom local LLMs), and default project settings, are stored locally on the user's device using Chrome's secure local storage API.</p>
+            <p>The developer of this extension does not collect, transmit, or store any of this configuration data, nor any chat content, on their own servers.</p>
+        </section>
+
+        <section>
+            <h2>3. Third-Party Services</h2>
+            <p>To function as intended, the extension transmits the user-selected text and the associated API keys directly to the user-configured third-party AI providers and the user's configured Redmine server. This communication happens directly between the user's browser and the respective APIs. The extension does not intercept, log, or reroute this data.</p>
+        </section>
+
+        <section>
+            <h2>4. Data Sharing</h2>
+            <p>We do not sell, trade, or otherwise transfer any user data to outside parties. Data is only transmitted to the specific APIs explicitly configured and authorized by the user within the extension's settings.</p>
+        </section>
+
+        <section>
+            <h2>5. Changes to This Policy</h2>
+            <p>We may update this Privacy Policy from time to time. Any changes will be reflected on this page with an updated effective date.</p>
+        </section>
+    </main>
+
+</body>
+</html>

@@ -3,139 +3,643 @@
 <head>
   <title>Extension Settings</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 450px; }
-    .form-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 5px; font-weight: bold; }
-    input[type="text"], input[type="password"], select, textarea { width: 100%; padding: 8px; box-sizing: border-box; }
-    textarea { resize: vertical; min-height: 80px; font-family: monospace; font-size: 12px; }
-    button { padding: 10px 15px; background: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; }
-    button:hover { background: #0056b3; }
-    hr { margin: 20px 0; border: 0; border-top: 1px solid #ccc; }
-    #status { margin-top: 10px; color: green; font-weight: bold; }
+    /* Base Layout & Compressed Spacing */
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 0;
+      min-height: 100vh;
+      overflow: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #f3f5f7;
+      color: #333333;
+      box-sizing: border-box;
+    }
+
+    .page-shell {
+      flex: 0 0 auto;
+      width: max-content;
+      min-width: 848px;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+
+    .settings-window {
+      position: relative;
+      width: 800px;
+      min-width: 800px;
+      padding: 15px 15px 76px 15px;
+      background: #ffffff;
+      border: 1px solid #d8dee4;
+      border-radius: 12px;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+      box-sizing: border-box;
+    }
+
+    h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 15px;
+      color: #555;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 5px;
+    }
+
+    /* Flexbox grid for two columns */
+    .layout-grid {
+      display: flex;
+      gap: 30px;
+      align-items: flex-start;
+      margin-bottom: 5px;
+    }
+
+    .column {
+      flex: 1;
+      min-width: 300px;
+    }
+
+    /* Form Elements */
+    .form-group { margin-bottom: 10px; } 
+    label { display: block; margin-bottom: 3px; font-weight: bold; font-size: 13px; }
+    input[type="text"], input[type="password"], select, textarea { 
+      width: 100%; 
+      padding: 7px; 
+      box-sizing: border-box; 
+      border: 1px solid #ccc; 
+      border-radius: 4px; 
+      font-family: inherit;
+      background-color: #fff;
+      color: #333;
+    }
+
+    input[type="text"], input[type="password"], select {
+      height: 34px;
+      line-height: 18px;
+    }
     
-    /* Hide provider settings by default */
-    .provider-settings { display: none; padding: 15px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 15px; }
-    .provider-settings.active { display: block; }
+    /* Aggressively compressed Vertex JSON area */
+    textarea { resize: vertical; min-height: 45px; font-family: monospace; font-size: 12px; }
+    
+    button { padding: 8px 15px; border: none; cursor: pointer; border-radius: 4px; color: white; font-weight: bold; }
+    button:hover { filter: brightness(0.9); }
+    
+    .status-msg { margin-top: 4px; font-weight: bold; font-size: 12px; min-height: 14px; text-align: center; width: 100%; }
+    .hint-text { color: #666; display: block; margin-top: 3px; font-size: 11px; }
+
+    .combo {
+      position: relative;
+    }
+
+    .combo-input-row {
+      display: flex;
+    }
+
+    .combo-input {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    .combo-toggle {
+      width: 40px;
+      min-width: 40px;
+      padding: 0;
+      border: 1px solid #ccc;
+      border-left: 0;
+      border-radius: 0 4px 4px 0;
+      background: #f1f3f4;
+      color: #333;
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .combo-toggle:hover {
+      filter: none;
+      background: #e6e9ec;
+    }
+
+    .combo-list {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      max-height: 190px;
+      margin: 0;
+      padding: 4px 0;
+      list-style: none;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+      overflow-y: auto;
+      z-index: 20;
+    }
+
+    .combo-list[hidden] {
+      display: none;
+    }
+
+    .combo-option {
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .combo-option:hover,
+    .combo-option.active {
+      background: #e8f0fe;
+    }
+
+    .combo-empty {
+      padding: 8px 10px;
+      color: #666;
+      font-size: 12px;
+    }
+    
+    .provider-settings-stage { display: grid; margin-bottom: 10px; }
+    .provider-settings {
+      grid-area: 1 / 1;
+      align-self: start;
+      padding: 10px;
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .provider-settings.active {
+      visibility: visible;
+      opacity: 1;
+      pointer-events: auto;
+      z-index: 1;
+    }
+
+    .mirror-settings-stage {
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .test-actions-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 30px;
+      margin-bottom: 6px;
+    }
+
+    .test-btn-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+    }
+
+    .test-action-stage {
+      display: grid;
+      width: 100%;
+      height: 38px;
+      margin-bottom: 4px;
+    }
+
+    .test-action-item {
+      grid-area: 1 / 1;
+      width: 100%;
+      height: 38px;
+      box-sizing: border-box;
+    }
+
+    .test-action-item.hidden {
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .test-action-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 14px;
+      white-space: nowrap;
+    }
+
+    .test-status {
+      min-height: 16px;
+      height: 16px;
+      margin-top: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .compact-panel {
+      margin: 0 auto;
+    }
+
+    .compact-panel-inline {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      text-align: center;
+    }
+
+    .compact-panel-title {
+      display: inline-block;
+      margin: 0;
+      font-size: 12px;
+      font-weight: bold;
+      color: #5f6368;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .compact-toggle-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .compact-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      padding: 0;
+    }
+
+    .compact-toggle input[type="checkbox"] {
+      margin: 0;
+      flex: 0 0 auto;
+    }
+
+    .compact-toggle label {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.25;
+      font-weight: normal;
+      min-width: 0;
+    }
+
+    /* Warning box for unsupported test features */
+    .warning-box {
+      width: 100%;
+      background: #fff3cd; 
+      color: #856404; 
+      border: 1px solid #ffeeba;
+      padding: 0 14px; 
+      border-radius: 4px; 
+      font-size: 12px; 
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+/* Sticky Footer for Save Button - perfectly centered */
+    .sticky-footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #ffffff;
+      padding: 6px 15px 10px 15px;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+      border-radius: 0 0 12px 12px;
+      box-sizing: border-box;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .sticky-footer .status-msg {
+      margin: 0;
+      min-height: 14px;
+      max-width: 520px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9); /* Čitelnost nad případným textem v pozadí */
+    }
+
+    /* --------------------------------------------------------------------------------- */
+    /* DARK MODE SUPPORT                                                                 */
+    /* --------------------------------------------------------------------------------- */
+    @media (prefers-color-scheme: dark) {
+      body { background-color: #16181c; color: #e8eaed; }
+      .settings-window {
+        background-color: #202124;
+        border-color: #3c4043;
+        box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+      }
+      h3 { color: #9aa0a6; border-bottom-color: #3c4043; }
+      
+      input[type="text"], input[type="password"], select, textarea { 
+        background-color: #303134; 
+        color: #e8eaed; 
+        border-color: #5f6368; 
+      }
+
+      .combo-toggle {
+        background: #3c4043;
+        color: #e8eaed;
+        border-color: #5f6368;
+      }
+
+      .combo-toggle:hover {
+        background: #4a4f54;
+      }
+
+      .combo-list {
+        background: #303134;
+        border-color: #5f6368;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+      }
+
+      .combo-option:hover,
+      .combo-option.active {
+        background: #3b4a64;
+      }
+
+      .combo-empty {
+        color: #9aa0a6;
+      }
+      
+      .provider-settings { background-color: #28292c; border-color: #3c4043; }
+      .hint-text { color: #9aa0a6; }
+      .compact-panel-title { color: #9aa0a6; }
+      
+      .warning-box { background: #332701; color: #ffdf7e; border-color: #4d3a02; }
+
+      .sticky-footer { 
+        background-color: #202124; 
+        box-shadow: 0 -4px 15px rgba(0,0,0,0.35); 
+      }
+
+      .sticky-footer .status-msg { text-shadow: 0 1px 3px rgba(32, 33, 36, 0.9); }
+
+    }
   </style>
 </head>
 <body>
-  <h2>Settings</h2>
+  <div class="page-shell">
+  <div class="settings-window">
+  <div class="layout-grid">
+    <div class="column">
+      <h3>AI Capabilities</h3>
 
-  <div class="form-group">
-    <label for="outputLanguage">Ticket Output Language:</label>
-    <select id="outputLanguage">
-      <option value="cs">Czech</option>
-      <option value="en">English</option>
-    </select>
+      <div class="form-group">
+        <label for="outputLanguage">Ticket Output Language:</label>
+        <select id="outputLanguage">
+          <option value="Czech">Czech</option>
+          <option value="English">English</option>
+          <option value="Slovak">Slovak</option>
+          <option value="Spanish">Spanish</option>
+          <option value="French">French</option>
+          <option value="German">German</option>
+          <option value="Italian">Italian</option>
+          <option value="Portuguese">Portuguese</option>
+          <option value="Dutch">Dutch</option>
+          <option value="Polish">Polish</option>
+          <option value="Russian">Russian</option>
+          <option value="Ukrainian">Ukrainian</option>
+          <option value="Turkish">Turkish</option>
+          <option value="Arabic">Arabic</option>
+          <option value="Hindi">Hindi</option>
+          <option value="Simplified Chinese">Chinese (Simplified)</option>
+          <option value="Traditional Chinese">Chinese (Traditional)</option>
+          <option value="Japanese">Japanese</option>
+          <option value="Korean">Korean</option>
+          <option value="Vietnamese">Vietnamese</option>
+          <option value="Thai">Thai</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="aiProvider">AI Provider:</label>
+        <select id="aiProvider">
+          <option value="openrouter">OpenRouter</option>
+          <option value="openai">OpenAI (ChatGPT)</option>
+          <option value="anthropic">Anthropic (Claude)</option>
+          <option value="aistudio">Google AI Studio (Gemini)</option>
+          <option value="vertex">Google Vertex AI</option>
+          <option value="custom">Custom LLM Endpoint</option>
+        </select>
+      </div>
+
+      <div class="provider-settings-stage">
+        <div id="settings-openrouter" class="provider-settings active">
+          <div class="form-group">
+            <label for="openRouterKey">OpenRouter API Key:</label>
+            <input type="password" id="openRouterKey" placeholder="sk-or-v1-...">
+          </div>
+          <div class="form-group">
+            <label for="openRouterModelSearch">Model:</label>
+            <div class="combo">
+              <div class="combo-input-row">
+                <input type="text" id="openRouterModelSearch" class="combo-input" autocomplete="off" placeholder="Search model..." role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="openRouterModelListbox">
+                <button type="button" id="openRouterModelToggle" class="combo-toggle" aria-label="Show models">&#9662;</button>
+              </div>
+              <ul id="openRouterModelListbox" class="combo-list" role="listbox" hidden></ul>
+              <input type="hidden" id="openRouterModel">
+            </div>
+            <small class="hint-text">Use 'Test AI Connection' to fetch models.</small>
+          </div>
+        </div>
+
+        <div id="settings-openai" class="provider-settings">
+          <div class="form-group">
+            <label for="openAiKey">OpenAI API Key:</label>
+            <input type="password" id="openAiKey" placeholder="sk-proj-...">
+          </div>
+          <div class="form-group">
+            <label for="openAiModelSearch">Model:</label>
+            <div class="combo">
+              <div class="combo-input-row">
+                <input type="text" id="openAiModelSearch" class="combo-input" autocomplete="off" placeholder="Search model..." role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="openAiModelListbox">
+                <button type="button" id="openAiModelToggle" class="combo-toggle" aria-label="Show models">&#9662;</button>
+              </div>
+              <ul id="openAiModelListbox" class="combo-list" role="listbox" hidden></ul>
+              <input type="hidden" id="openAiModel">
+            </div>
+            <small class="hint-text">Use 'Test AI Connection' to fetch models.</small>
+          </div>
+        </div>
+
+        <div id="settings-anthropic" class="provider-settings">
+          <div class="form-group">
+            <label for="anthropicKey">Anthropic API Key:</label>
+            <input type="password" id="anthropicKey" placeholder="sk-ant-api03-...">
+          </div>
+          <div class="form-group">
+            <label for="anthropicModelSearch">Model:</label>
+            <div class="combo">
+              <div class="combo-input-row">
+                <input type="text" id="anthropicModelSearch" class="combo-input" autocomplete="off" placeholder="Search model..." role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="anthropicModelListbox">
+                <button type="button" id="anthropicModelToggle" class="combo-toggle" aria-label="Show models">&#9662;</button>
+              </div>
+              <ul id="anthropicModelListbox" class="combo-list" role="listbox" hidden></ul>
+              <input type="hidden" id="anthropicModel">
+            </div>
+            <small class="hint-text">Use 'Test AI Connection' to fetch models.</small>
+          </div>
+        </div>
+
+        <div id="settings-aistudio" class="provider-settings">
+          <div class="form-group">
+            <label for="aiStudioKey">AI Studio API Key:</label>
+            <input type="password" id="aiStudioKey" placeholder="AIzaSy...">
+          </div>
+          <div class="form-group">
+            <label for="aiStudioModelSearch">Model:</label>
+            <div class="combo">
+              <div class="combo-input-row">
+                <input type="text" id="aiStudioModelSearch" class="combo-input" autocomplete="off" placeholder="Search model..." role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="aiStudioModelListbox">
+                <button type="button" id="aiStudioModelToggle" class="combo-toggle" aria-label="Show models">&#9662;</button>
+              </div>
+              <ul id="aiStudioModelListbox" class="combo-list" role="listbox" hidden></ul>
+              <input type="hidden" id="aiStudioModel">
+            </div>
+            <small class="hint-text">Use 'Test AI Connection' to fetch models.</small>
+          </div>
+        </div>
+
+        <div id="settings-vertex" class="provider-settings">
+          <div class="form-group">
+            <label for="vertexJson">Service Account JSON:</label>
+            <textarea id="vertexJson" placeholder='{"type": "service_account", "project_id": "...", ...}'></textarea>
+          </div>
+          <div class="form-group">
+            <label for="vertexRegion">Region:</label>
+            <input type="text" id="vertexRegion" placeholder="us-central1">
+          </div>
+          <div class="form-group">
+            <label for="vertexModel">Model:</label>
+            <input type="text" id="vertexModel" placeholder="gemini-1.5-pro-002">
+            <small class="hint-text">Vertex AI models must be entered manually.</small>
+          </div>
+        </div>
+
+        <div id="settings-custom" class="provider-settings">
+          <div class="form-group">
+            <label for="customUrl">Custom Endpoint URL:</label>
+            <input type="text" id="customUrl" placeholder="http://localhost:1234/v1/chat/completions">
+          </div>
+          <div class="form-group">
+            <label for="customKey">API Key (Optional):</label>
+            <input type="password" id="customKey" placeholder="Leave empty for most local LLMs">
+          </div>
+          <div class="form-group">
+            <label for="customModelSearch">Model Name:</label>
+            <div class="combo">
+              <div class="combo-input-row">
+                <input type="text" id="customModelSearch" class="combo-input" autocomplete="off" placeholder="Search model..." role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="customModelListbox">
+                <button type="button" id="customModelToggle" class="combo-toggle" aria-label="Show models">&#9662;</button>
+              </div>
+              <ul id="customModelListbox" class="combo-list" role="listbox" hidden></ul>
+              <input type="hidden" id="customModel">
+            </div>
+            <small class="hint-text">Use 'Test AI Connection' to fetch models.</small>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="column">
+      <h3>Redmine Instance</h3>
+
+      <div class="form-group">
+        <label for="redmineUrl">Redmine Server URL:</label>
+        <input type="text" id="redmineUrl" placeholder="https://redmine.yourcompany.com">
+      </div>
+      <div class="form-group">
+        <label for="redmineKey">Redmine API Key:</label>
+        <input type="password" id="redmineKey" placeholder="a1b2c3d4e5f6g7h8i9j0...">
+      </div>
+      <div class="mirror-settings-stage">
+        <div class="form-group">
+          <label for="defaultProjectSearch">Default Project:</label>
+          <div class="combo" id="defaultProjectCombo">
+            <div class="combo-input-row">
+              <input type="text" id="defaultProjectSearch" class="combo-input" autocomplete="off" placeholder="Search project..." role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="defaultProjectListbox">
+              <button type="button" id="defaultProjectToggle" class="combo-toggle" aria-label="Show projects">&#9662;</button>
+            </div>
+            <ul id="defaultProjectListbox" class="combo-list" role="listbox" hidden></ul>
+            <input type="hidden" id="defaultProject">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="defaultUserSearch">Default Assignee:</label>
+          <div class="combo" id="defaultUserCombo">
+            <div class="combo-input-row">
+              <input type="text" id="defaultUserSearch" class="combo-input" autocomplete="off" placeholder="Search user..." role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="defaultUserListbox">
+              <button type="button" id="defaultUserToggle" class="combo-toggle" aria-label="Show users">&#9662;</button>
+            </div>
+            <ul id="defaultUserListbox" class="combo-list" role="listbox" hidden></ul>
+            <input type="hidden" id="defaultUser">
+          </div>
+          <small class="hint-text">Use 'Test Redmine Connection' to fetch IDs.</small>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-  <div class="form-group">
-    <label for="aiProvider">AI Provider:</label>
-    <select id="aiProvider">
-      <option value="openrouter">OpenRouter</option>
-      <option value="openai">OpenAI (ChatGPT)</option>
-      <option value="anthropic">Anthropic (Claude)</option>
-      <option value="aistudio">Google AI Studio (Gemini)</option>
-      <option value="vertex">Google Vertex AI</option>
-      <option value="custom">Custom Local LLM</option>
-    </select>
-  </div>
-
-  <div id="settings-openrouter" class="provider-settings active">
-    <div class="form-group">
-      <label for="openRouterKey">OpenRouter API Key:</label>
-      <input type="password" id="openRouterKey" placeholder="sk-or-v1-...">
+  <div class="test-actions-row">
+    <div class="test-btn-wrapper">
+      <div class="test-action-stage">
+        <button id="testAiBtn" class="test-action-item test-action-button" type="button" style="background: #007bff;">Test AI Connection & Fetch Models</button>
+        <div id="vertexWarning" class="warning-box test-action-item hidden">Connection test unavailable for this provider.</div>
+      </div>
+      <div id="aiStatus" class="status-msg test-status"></div>
     </div>
-    <div class="form-group">
-      <label for="openRouterModel">Model:</label>
-      <input type="text" id="openRouterModel" placeholder="meta-llama/llama-3.3-70b-instruct:free">
+
+    <div class="test-btn-wrapper">
+      <div class="test-action-stage">
+        <button id="testRedmineBtn" class="test-action-item test-action-button" type="button" style="background: #007bff;">Test Redmine Connection & Fetch IDs</button>
+      </div>
+      <div id="redmineStatus" class="status-msg test-status"></div>
     </div>
   </div>
 
-  <div id="settings-openai" class="provider-settings">
-    <div class="form-group">
-      <label for="openAiKey">OpenAI API Key:</label>
-      <input type="password" id="openAiKey" placeholder="sk-proj-...">
-    </div>
-    <div class="form-group">
-      <label for="openAiModel">Model:</label>
-      <input type="text" id="openAiModel" placeholder="gpt-4o">
-    </div>
-  </div>
-
-  <div id="settings-anthropic" class="provider-settings">
-    <div class="form-group">
-      <label for="anthropicKey">Anthropic API Key:</label>
-      <input type="password" id="anthropicKey" placeholder="sk-ant-api03-...">
-    </div>
-    <div class="form-group">
-      <label for="anthropicModel">Model:</label>
-      <input type="text" id="anthropicModel" placeholder="claude-3-7-sonnet-20250219">
+  <div class="compact-panel compact-panel-inline">
+    <span class="compact-panel-title">Processing UI:</span>
+    <div class="compact-toggle-grid">
+      <div class="compact-toggle">
+        <input type="checkbox" id="showRemainingTime" checked>
+        <label for="showRemainingTime">Remaining time</label>
+      </div>
+      <div class="compact-toggle">
+        <input type="checkbox" id="showAttemptCount" checked>
+        <label for="showAttemptCount">Attempt count</label>
+      </div>
+      <div class="compact-toggle">
+        <input type="checkbox" id="showTaskDuration" checked>
+        <label for="showTaskDuration">Result duration</label>
+      </div>
     </div>
   </div>
 
-  <div id="settings-aistudio" class="provider-settings">
-    <div class="form-group">
-      <label for="aiStudioKey">AI Studio API Key:</label>
-      <input type="password" id="aiStudioKey" placeholder="AIzaSy...">
-    </div>
-    <div class="form-group">
-      <label for="aiStudioModel">Model:</label>
-      <input type="text" id="aiStudioModel" placeholder="gemini-2.5-pro">
-    </div>
+  <div class="sticky-footer">
+    <button id="saveBtn" type="button" style="background: #28a745; width: 100%; max-width: 400px; font-size: 14px; padding: 8px 15px;">Save All Settings</button>
+    <div id="status" class="status-msg"></div>
   </div>
-
-  <div id="settings-vertex" class="provider-settings">
-    <div class="form-group">
-      <label for="vertexJson">Service Account JSON:</label>
-      <textarea id="vertexJson" placeholder='{"type": "service_account", "project_id": "...", ...}'></textarea>
-    </div>
-    <div class="form-group">
-      <label for="vertexRegion">Region:</label>
-      <input type="text" id="vertexRegion" placeholder="us-central1">
-    </div>
-    <div class="form-group">
-      <label for="vertexModel">Model:</label>
-      <input type="text" id="vertexModel" placeholder="gemini-1.5-pro-002">
-    </div>
   </div>
-
-  <div id="settings-custom" class="provider-settings">
-    <div class="form-group">
-      <label for="customUrl">Custom Endpoint URL:</label>
-      <input type="text" id="customUrl" placeholder="http://localhost:1234/v1/chat/completions">
-    </div>
-    <div class="form-group">
-      <label for="customKey">API Key (Optional):</label>
-      <input type="password" id="customKey" placeholder="Leave empty for most local LLMs">
-    </div>
-    <div class="form-group">
-      <label for="customModel">Model Name (Optional):</label>
-      <input type="text" id="customModel" placeholder="local-model">
-    </div>
   </div>
-
-  <hr>
-
-  <div class="form-group">
-    <label for="redmineUrl">Redmine Server URL:</label>
-    <input type="text" id="redmineUrl" placeholder="https://redmine.yourcompany.com">
-  </div>
-  <div class="form-group">
-    <label for="redmineKey">Redmine API Key:</label>
-    <input type="password" id="redmineKey" placeholder="a1b2c3d4e5f6g7h8i9j0...">
-  </div>
-  <div class="form-group">
-    <label for="defaultProject">Default Project ID:</label>
-    <input type="text" id="defaultProject" placeholder="12">
-  </div>
-  <div class="form-group">
-    <label for="defaultUser">Default Assignee (User ID):</label>
-    <input type="text" id="defaultUser" placeholder="42">
-  </div>
-
-  <button id="saveBtn">Save Settings</button>
-  <div id="status"></div>
 
   <script src="options.js"></script>
 </body>
