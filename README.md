@@ -198,4 +198,4 @@ In plain English: whether this extension supercharges your productivity or accid
 
 ## Privacy
 
-- See [privacy.html](privacy.html).
+- See [PRIVACY](https://jvsup.github.io/chrome-extension-google-chat-to-redmine-ticket/privacy.html).
