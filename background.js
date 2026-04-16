@@ -1,8 +1,11 @@
 const AI_REQUEST_TIMEOUT_MS = 180000;
 const MAX_QUEUED_REQUESTS = 5;
+const BACKGROUND_KEEPALIVE_INTERVAL_MS = 20000;
 const tabRequestQueues = new Map();
 const googleAuthCache = new Map();
 const GOOGLE_TOKEN_REFRESH_SKEW_MS = 60 * 1000;
+let backgroundKeepAliveIntervalId = null;
+let backgroundKeepAliveRefCount = 0;
 
 function createCancellationError() {
   const error = new Error("Sending cancelled.");
@@ -82,6 +85,31 @@ function notifyQueueState(tabId) {
   });
 }
 
+function startBackgroundKeepAlive() {
+  backgroundKeepAliveRefCount += 1;
+  if (backgroundKeepAliveIntervalId) {
+    return;
+  }
+
+  backgroundKeepAliveIntervalId = setInterval(() => {
+    chrome.runtime.getPlatformInfo(() => {
+      void chrome.runtime.lastError;
+    });
+  }, BACKGROUND_KEEPALIVE_INTERVAL_MS);
+}
+
+function stopBackgroundKeepAlive() {
+  backgroundKeepAliveRefCount = Math.max(0, backgroundKeepAliveRefCount - 1);
+  if (backgroundKeepAliveRefCount > 0) {
+    return;
+  }
+
+  if (backgroundKeepAliveIntervalId) {
+    clearInterval(backgroundKeepAliveIntervalId);
+    backgroundKeepAliveIntervalId = null;
+  }
+}
+
 function startNextQueuedRequest(tabId) {
   const tabQueue = tabRequestQueues.get(tabId);
   if (!tabQueue || tabQueue.activeRequest || tabQueue.pendingRequests.length === 0) {
@@ -112,6 +140,7 @@ async function handleQueuedRequest(queueItem) {
 
   console.log("[TicketExt] === QUEUED TICKET PROCESS STARTED ===");
   console.log("[TicketExt] Payload received from UI:", payload);
+  startBackgroundKeepAlive();
 
   try {
     const result = await processTicketFlow(payload, tabId, context);
@@ -157,6 +186,7 @@ async function handleQueuedRequest(queueItem) {
       }).catch(err => console.warn("[TicketExt] Could not send error message to tab:", err));
     }
   } finally {
+    stopBackgroundKeepAlive();
     finalizeActiveRequest(tabId, queueItem);
   }
 }
@@ -521,6 +551,8 @@ The JSON object must contain exactly two keys:
       return await callOpenAiCompatible("https://openrouter.ai/api/v1/chat/completions", settings.openRouterKey, settings.openRouterModel, systemPrompt, text, requestContext);
     case 'openai': 
       return await callOpenAiCompatible("https://api.openai.com/v1/chat/completions", settings.openAiKey, settings.openAiModel, systemPrompt, text, requestContext);
+    case 'nanogpt':
+      return await callOpenAiCompatible("https://nano-gpt.com/api/v1/chat/completions", settings.nanoGptKey, settings.nanoGptModel, systemPrompt, text, requestContext);
     case 'anthropic': 
       return await callAnthropic(settings.anthropicKey, settings.anthropicModel, systemPrompt, text, requestContext);
     case 'aistudio': 
@@ -762,12 +794,11 @@ async function createRedmineIssue(ticketData, projectId, assigneeId, priorityId,
       priority_id: priorityId 
     }
   };
-  const response = await fetch(`${settings.redmineUrl}/issues.json`, {
+  const response = await fetchWithTimeout(`${settings.redmineUrl}/issues.json`, {
     method: "POST",
     headers: { "X-Redmine-API-Key": settings.redmineKey, "Content-Type": "application/json" },
-    signal: requestContext ? requestContext.controller.signal : undefined,
     body: JSON.stringify(payload)
-  });
+  }, AI_REQUEST_TIMEOUT_MS, requestContext ? requestContext.controller.signal : null);
   if (!response.ok) throw new Error(`Redmine API error: ${response.status}`);
   return await response.json();
 }

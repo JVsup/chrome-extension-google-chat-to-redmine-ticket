@@ -47,10 +47,11 @@ const updateProviderUI = () => {
 document.getElementById('aiProvider').addEventListener('change', updateProviderUI);
 
 const searchableFieldStates = new Map();
-const AI_MODEL_FIELD_IDS = ['openRouterModel', 'openAiModel', 'anthropicModel', 'aiStudioModel', 'customModel'];
+const AI_MODEL_FIELD_IDS = ['openRouterModel', 'openAiModel', 'nanoGptModel', 'anthropicModel', 'aiStudioModel', 'customModel'];
 const AI_MODEL_LABEL_FIELD_IDS = {
   openRouterModel: 'openRouterModelSearch',
   openAiModel: 'openAiModelSearch',
+  nanoGptModel: 'nanoGptModelSearch',
   anthropicModel: 'anthropicModelSearch',
   aiStudioModel: 'aiStudioModelSearch',
   customModel: 'customModelSearch'
@@ -435,6 +436,9 @@ const saveOptions = () => {
         openAiKey: document.getElementById('openAiKey').value,
         openAiModel: document.getElementById('openAiModel').value,
         openAiModelLabel: document.getElementById('openAiModelSearch').value.trim(),
+        nanoGptKey: document.getElementById('nanoGptKey').value,
+        nanoGptModel: document.getElementById('nanoGptModel').value,
+        nanoGptModelLabel: document.getElementById('nanoGptModelSearch').value.trim(),
         anthropicKey: document.getElementById('anthropicKey').value,
         anthropicModel: document.getElementById('anthropicModel').value,
         anthropicModelLabel: document.getElementById('anthropicModelSearch').value.trim(),
@@ -491,6 +495,7 @@ const testAiConnection = async () => {
     const idMap = {
       'custom': 'customModel',
       'openai': 'openAiModel',
+      'nanogpt': 'nanoGptModel',
       'openrouter': 'openRouterModel',
       'aistudio': 'aiStudioModel',
       'anthropic': 'anthropicModel'
@@ -524,6 +529,13 @@ const testAiConnection = async () => {
       const key = document.getElementById('openRouterKey').value;
       if (!key) throw new Error("Missing OpenRouter API Key");
       url = 'https://openrouter.ai/api/v1/models';
+      headers = { "Authorization": `Bearer ${key}` };
+      extractModelsFn = (data) => data.data.map(m => m.id);
+
+    } else if (provider === 'nanogpt') {
+      const key = document.getElementById('nanoGptKey').value;
+      if (!key) throw new Error("Missing NanoGPT API Key");
+      url = 'https://nano-gpt.com/api/v1/models';
       headers = { "Authorization": `Bearer ${key}` };
       extractModelsFn = (data) => data.data.map(m => m.id);
 
@@ -675,6 +687,11 @@ const restoreOptions = () => {
       items.openAiModelLabel || items.openAiModel || 'gpt-4o'
     );
     setSearchableFieldValue(
+      'nanoGptModel',
+      items.nanoGptModel || 'openai/gpt-5.2-chat-latest',
+      items.nanoGptModelLabel || items.nanoGptModel || 'openai/gpt-5.2-chat-latest'
+    );
+    setSearchableFieldValue(
       'anthropicModel',
       items.anthropicModel || 'claude-3-7-sonnet-20250219',
       items.anthropicModelLabel || items.anthropicModel || 'claude-3-7-sonnet-20250219'
@@ -698,6 +715,7 @@ const restoreOptions = () => {
     // Standard inputs
     document.getElementById('openRouterKey').value = items.openRouterKey || '';
     document.getElementById('openAiKey').value = items.openAiKey || '';
+    document.getElementById('nanoGptKey').value = items.nanoGptKey || '';
     document.getElementById('anthropicKey').value = items.anthropicKey || '';
     document.getElementById('aiStudioKey').value = items.aiStudioKey || '';
     document.getElementById('vertexJson').value = items.vertexJson || '';
@@ -724,6 +742,7 @@ document.addEventListener('click', (event) => {
 
 initializeSearchableField('openRouterModel', 'openRouterModelSearch', 'openRouterModelListbox', 'openRouterModelToggle');
 initializeSearchableField('openAiModel', 'openAiModelSearch', 'openAiModelListbox', 'openAiModelToggle');
+initializeSearchableField('nanoGptModel', 'nanoGptModelSearch', 'nanoGptModelListbox', 'nanoGptModelToggle');
 initializeSearchableField('anthropicModel', 'anthropicModelSearch', 'anthropicModelListbox', 'anthropicModelToggle');
 initializeSearchableField('aiStudioModel', 'aiStudioModelSearch', 'aiStudioModelListbox', 'aiStudioModelToggle');
 initializeSearchableField('customModel', 'customModelSearch', 'customModelListbox', 'customModelToggle');

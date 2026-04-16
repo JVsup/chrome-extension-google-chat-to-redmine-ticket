@@ -13,7 +13,7 @@ Features:
 - trigger with `Ctrl+Shift+Y` / `Cmd+Shift+Y`
 - choose project, assignee, and priority before creating the ticket
 - save a default project and default assignee
-- fetch model lists from OpenRouter / OpenAI / Anthropic / Google AI Studio / custom OpenAI-compatible endpoint
+- fetch model lists from OpenRouter / OpenAI / NanoGPT / Anthropic / Google AI Studio / custom OpenAI-compatible endpoint
 - fetch projects, users, and priorities from Redmine
 - show progress, timeout, retry count, and task duration
 - queue multiple requests, including cancelling running or queued requests
@@ -22,6 +22,7 @@ Supported AI backends:
 
 - OpenRouter
 - OpenAI
+- NanoGPT
 - Anthropic
 - Google AI Studio
 - Google Vertex AI

@@ -3,10 +3,13 @@ let redmineData = { projects: [], users: [], priorities: [] };
 const DEFAULT_AI_TIMEOUT_MS = 180000;
 const DEFAULT_MAX_QUEUE_SIZE = 5;
 const INLINE_NOTICE_TIMEOUT_MS = 5000;
+const LOADING_STALE_GRACE_MS = 5000;
 let loadingCountdownInterval = null;
 let loadingCountdownDeadline = null;
 let loadingAttemptText = "";
 let currentLoadingRequestId = null;
+let loadingStaleTimeoutId = null;
+let loadingStaleRequestId = null;
 let loadingQueueState = {
   activeRequest: null,
   pendingRequests: [],
@@ -76,12 +79,18 @@ function setupMessageListener() {
     } else if (request.action === "queueStateUpdated") {
       applyQueueState(request);
     } else if (request.action === "ticketCreated") {
+      clearLoadingCountdown();
+      clearLoadingStaleTimeout();
       const taskDurationMs = consumeRequestDurationMs(request.requestId);
       showLoadingSuccessNotice(request.ticketId, request.ticketUrl, taskDurationMs);
     } else if (request.action === "ticketError") {
+      clearLoadingCountdown();
+      clearLoadingStaleTimeout();
       const taskDurationMs = consumeRequestDurationMs(request.requestId);
       showLoadingErrorNotice(request.errorMessage, taskDurationMs);
     } else if (request.action === "ticketCancelled") {
+      clearLoadingCountdown();
+      clearLoadingStaleTimeout();
       clearTrackedRequest(request.requestId);
     } else if (request.action === "updateAttempt") {
       if (request.requestId !== currentLoadingRequestId) {
@@ -129,6 +138,14 @@ function clearInlineNoticeTimeout() {
     clearTimeout(loadingInlineNoticeTimeoutId);
     loadingInlineNoticeTimeoutId = null;
   }
+}
+
+function clearLoadingStaleTimeout() {
+  if (loadingStaleTimeoutId) {
+    clearTimeout(loadingStaleTimeoutId);
+    loadingStaleTimeoutId = null;
+  }
+  loadingStaleRequestId = null;
 }
 
 function dismissLoadingNotice() {
@@ -211,6 +228,7 @@ function applyQueueState(state) {
   if (previousActiveRequestId !== currentLoadingRequestId) {
     loadingAttemptText = "";
     clearLoadingCountdown();
+    clearLoadingStaleTimeout();
 
     if (currentLoadingRequestId) {
       resetLoadingCountdown();
@@ -414,14 +432,42 @@ function clearLoadingCountdown() {
   loadingCountdownDeadline = null;
 }
 
+function markLoadingAsStale(requestId) {
+  if (!requestId || currentLoadingRequestId !== requestId) {
+    return;
+  }
+
+  clearTrackedRequest(requestId);
+  currentLoadingRequestId = null;
+  loadingQueueState.activeRequest = null;
+  loadingAttemptText = "";
+  clearLoadingStaleTimeout();
+  updateLoadingText("Request timed out.");
+  showLoadingErrorNotice("Request timed out before ticket creation completed.");
+  renderLoadingMeta();
+  renderLoadingQueue();
+  renderLoadingShellState();
+  renderLoadingNotice();
+}
+
 function resetLoadingCountdown(timeoutMs = DEFAULT_AI_TIMEOUT_MS) {
   clearLoadingCountdown();
+  clearLoadingStaleTimeout();
   loadingCountdownDeadline = Date.now() + timeoutMs;
   renderLoadingCountdown();
   loadingCountdownInterval = setInterval(() => {
     renderLoadingCountdown();
     if (loadingCountdownDeadline && Date.now() >= loadingCountdownDeadline) {
       clearLoadingCountdown();
+      if (currentLoadingRequestId) {
+        const expiredRequestId = currentLoadingRequestId;
+        loadingStaleRequestId = expiredRequestId;
+        updateLoadingText("Request timed out. Waiting for cleanup...");
+        renderLoadingMeta();
+        loadingStaleTimeoutId = setTimeout(() => {
+          markLoadingAsStale(expiredRequestId);
+        }, LOADING_STALE_GRACE_MS);
+      }
     }
   }, 1000);
 }
@@ -583,7 +629,15 @@ function ensureLoadingIndicator() {
   if (closeButton) {
     closeButton.onclick = async () => {
       const requestId = currentLoadingRequestId;
-      if (!requestId) return;
+      if (!requestId) {
+        hideLoadingIndicator();
+        return;
+      }
+
+      if (loadingStaleRequestId && loadingStaleRequestId === requestId) {
+        markLoadingAsStale(requestId);
+        return;
+      }
 
       updateLoadingText("Cancelling current request...");
       const response = await chrome.runtime.sendMessage({ action: "cancelProcessing", requestId }).catch(err => {
@@ -592,6 +646,10 @@ function ensureLoadingIndicator() {
       });
 
       if (!response || !response.success) {
+        if (loadingStaleRequestId && loadingStaleRequestId === requestId) {
+          markLoadingAsStale(requestId);
+          return;
+        }
         updateLoadingText("Processing ticket via AI...");
       }
     };
@@ -606,6 +664,7 @@ function ensureLoadingIndicator() {
 function hideLoadingIndicator() {
   clearInlineNoticeTimeout();
   clearLoadingCountdown();
+  clearLoadingStaleTimeout();
   loadingAttemptText = "";
   currentLoadingRequestId = null;
   loadingInlineNotice = null;

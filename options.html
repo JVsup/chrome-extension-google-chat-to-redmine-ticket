@@ -433,6 +433,7 @@
         <select id="aiProvider">
           <option value="openrouter">OpenRouter</option>
           <option value="openai">OpenAI (ChatGPT)</option>
+          <option value="nanogpt">NanoGPT</option>
           <option value="anthropic">Anthropic (Claude)</option>
           <option value="aistudio">Google AI Studio (Gemini)</option>
           <option value="vertex">Google Vertex AI</option>
@@ -476,6 +477,25 @@
               <input type="hidden" id="openAiModel">
             </div>
             <small class="hint-text">Use 'Test AI Connection' to fetch models.</small>
+          </div>
+        </div>
+
+        <div id="settings-nanogpt" class="provider-settings">
+          <div class="form-group">
+            <label for="nanoGptKey">NanoGPT API Key:</label>
+            <input type="password" id="nanoGptKey" placeholder="ngpt_...">
+          </div>
+          <div class="form-group">
+            <label for="nanoGptModelSearch">Model:</label>
+            <div class="combo">
+              <div class="combo-input-row">
+                <input type="text" id="nanoGptModelSearch" class="combo-input" autocomplete="off" placeholder="Search model..." role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="nanoGptModelListbox">
+                <button type="button" id="nanoGptModelToggle" class="combo-toggle" aria-label="Show models">&#9662;</button>
+              </div>
+              <ul id="nanoGptModelListbox" class="combo-list" role="listbox" hidden></ul>
+              <input type="hidden" id="nanoGptModel">
+            </div>
+            <small class="hint-text">Uses `https://nano-gpt.com/api/v1/models`.</small>
           </div>
         </div>
 
